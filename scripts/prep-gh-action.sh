@@ -16,7 +16,7 @@ while [ $# -ne 0 ]; do
     arg="$1"
     case "$arg" in
         --install-swiftly)
-            installSwiftly=true
+            installTemperSwift=true
             ;;
         --swift-snapshot)
             swiftSnapshot="$2"
@@ -28,7 +28,7 @@ while [ $# -ne 0 ]; do
     shift
 done
 
-if [ "$installSwiftly" == true ]; then
+if [ "$installTemperSwift" == true ]; then
     echo "Installing swiftly"
 
     if [[ "$(uname -s)" == "Linux" ]]; then

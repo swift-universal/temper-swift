@@ -36,7 +36,7 @@ struct GenerateDocsReferencePlugin: CommandPlugin {
         // Build all products first.
         print("Building package in \(configuration) mode...")
         let buildResult = try packageManager.build(
-            .product("swiftly"),
+            .product("temper-swift"),
             parameters: .init(configuration: configuration)
         )
 
@@ -57,8 +57,8 @@ struct GenerateDocsReferencePlugin: CommandPlugin {
 
             let outputFile = context.package.directoryURL
                 .appendingPathComponent("Documentation")
-                .appendingPathComponent("SwiftlyDocs.docc")
-                .appendingPathComponent("swiftly-cli-reference.md")
+                .appendingPathComponent("TemperSwiftDocs.docc")
+                .appendingPathComponent("temper-swift-cli-reference.md")
 
             // Create generation tool arguments.
             var generationToolArguments = [

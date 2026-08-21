@@ -4,11 +4,11 @@ Swift has a tool for producing final product packages, suitable for distribution
 
 1. Check out the commit you wish to create a release for. Ensure no other local modifications or changes are present.
 
-2. Check the validity of the documentation preview  with `swift package --disable-sandbox preview-documentation --target SwiftlyDocs`
+2. Check the validity of the documentation preview  with `swift package --disable-sandbox preview-documentation --target TemperSwiftDocs`
 
 3. Verify that the swiftly command-line reference is up-to-date, if not then run `swift package plugin generate-docs-reference` to update it.
 
-4. Ensure the version string in `SwiftlyCore/SwiftlyCore.swift` is accurate. If it is not, push another commit updating it to the proper value.
+4. Ensure the version string in `TemperSwiftCore/TemperSwiftCore.swift` is accurate. If it is not, push another commit updating it to the proper value.
 
 5. Create a tag on that commit with the format "x.y.z". Do not omit "z", even if its value is 0.
 

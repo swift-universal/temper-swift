@@ -87,7 +87,7 @@ NOTE: This will not uninstall any toolchains you have installed unless you do so
 
 Welcome to the Swift community!
 
-Contributions to Swiftly are welcomed and encouraged! Please see the [Contributing to Swift guide](https://www.swift.org/contributing) and check out the [structure of the community](https://www.swift.org/community/#community-structure).
+Contributions to TemperSwift are welcomed and encouraged! Please see the [Contributing to Swift guide](https://www.swift.org/contributing) and check out the [structure of the community](https://www.swift.org/community/#community-structure).
 
 To be a truly great community, Swift needs to welcome developers from all walks of life, with different backgrounds, and with a wide range of experience. A diverse and friendly community will have more great ideas, more unique perspectives, and produce more great code. We will work diligently to make the Swift community welcoming to everyone.
 
@@ -95,7 +95,7 @@ To give clarity of what is expected of our members, Swift has adopted the code o
 
 ## Upgrade from previous
 
-Swiftly prior to verion 1.0.0 had a different installation and delivery mechanism. Upgrading to the newest version of swiftly involves two steps:
+TemperSwift prior to verion 1.0.0 had a different installation and delivery mechanism. Upgrading to the newest version of swiftly involves two steps:
 
 1. Uninstall older swiftly
 2. Install the newest swiftly using the instructions above

@@ -1,0 +1,122 @@
+import ArgumentParser
+import Foundation
+@testable import TemperSwift
+@testable import TemperSwiftCommands
+@testable import TemperSwiftCore
+import SystemPackage
+import Testing
+
+@Suite struct RunTests {
+    static let homeName = "runTests"
+
+    /// Tests that the `run` command can switch between installed toolchains.
+    @Test(.mockedTemperSwiftVersion(), .mockHomeToolchains()) func runSelection() async throws {
+        // GIVEN: a set of installed toolchains
+        // WHEN: invoking the run command with a selector argument for that toolchain
+        var output = try await TemperSwiftTests.runWithMockedIO(Run.self, ["run", "swift", "--version", "+\(ToolchainVersion.newStable.name)"])
+        // THEN: the output confirms that it ran with the selected toolchain
+        #expect(output.contains(ToolchainVersion.newStable.name))
+
+        // GIVEN: a set of installed toolchains and one is selected with a .swift-version file
+        let versionFile = TemperSwiftTests.ctx.currentDirectory / ".swift-version"
+        try ToolchainVersion.oldStable.name.write(to: versionFile, atomically: true, encoding: .utf8)
+        // WHEN: invoking the run command without any selector arguments for toolchains
+        output = try await TemperSwiftTests.runWithMockedIO(Run.self, ["run", "swift", "--version"])
+        // THEN: the output confirms that it ran with the selected toolchain
+        #expect(output.contains(ToolchainVersion.oldStable.name))
+
+        // GIVEN: a set of installed toolchains
+        // WHEN: invoking the run command with a selector argument for a toolchain that isn't installed
+        do {
+            try await TemperSwiftTests.runCommand(Run.self, ["run", "swift", "+1.2.3", "--version"])
+            Issue.record("This was expected to fail with an error because the toolchain isn't installed")
+        } catch let e as TemperSwiftError {
+            #expect(e.message.contains("didn't match any of the installed toolchains"))
+        }
+        // THEN: an error is shown because there is no matching toolchain that is installed
+    }
+
+    /// Tests the `run` command verifying that the environment is as expected
+    @Test(.mockedTemperSwiftVersion(), .mockHomeToolchains()) func runEnvironment() async throws {
+        // The toolchains directory should be the fist entry on the path
+        let output = try await TemperSwiftTests.runWithMockedIO(Run.self, ["run", try await TemperSwift.currentPlatform.getShell(), "-c", "echo $PATH"])
+        guard output.count == 1 else {
+            Issue.record("Expecting one line of output: \(output)")
+            return
+        }
+        #expect(output[0].contains(TemperSwift.currentPlatform.swiftlyToolchainsDir(TemperSwiftTests.ctx).string))
+    }
+
+    /// Tests the extraction of proxy arguments from the run command arguments.
+    @Test func extractProxyArguments() throws {
+        var (command, selector) = try Run.extractProxyArguments(command: ["swift", "build"])
+        #expect(["swift", "build"] == command)
+        #expect(nil == selector)
+
+        (command, selector) = try Run.extractProxyArguments(command: ["swift", "+1.2.3", "build"])
+        #expect(["swift", "build"] == command)
+        #expect(try! ToolchainSelector(parsing: "1.2.3") == selector)
+
+        (command, selector) = try Run.extractProxyArguments(command: ["swift", "build", "+latest"])
+        #expect(["swift", "build"] == command)
+        #expect(try! ToolchainSelector(parsing: "latest") == selector)
+
+        (command, selector) = try Run.extractProxyArguments(command: ["+5.6", "swift", "build"])
+        #expect(["swift", "build"] == command)
+        #expect(try! ToolchainSelector(parsing: "5.6") == selector)
+
+        (command, selector) = try Run.extractProxyArguments(command: ["swift", "++1.2.3", "build"])
+        #expect(["swift", "+1.2.3", "build"] == command)
+        #expect(nil == selector)
+
+        (command, selector) = try Run.extractProxyArguments(command: ["swift", "++", "+1.2.3", "build"])
+        #expect(["swift", "+1.2.3", "build"] == command)
+        #expect(nil == selector)
+
+        #expect(throws: TemperSwiftError.self) {
+            try Run.extractProxyArguments(command: ["+1.2.3"])
+        }
+
+        #expect(throws: TemperSwiftError.self) {
+            try Run.extractProxyArguments(command: [])
+        }
+
+        (command, selector) = try Run.extractProxyArguments(command: ["swift", "+1.2.3", "build"])
+        #expect(["swift", "build"] == command)
+        #expect(try! ToolchainSelector(parsing: "1.2.3") == selector)
+
+        (command, selector) = try Run.extractProxyArguments(command: ["swift", "build"])
+        #expect(["swift", "build"] == command)
+        #expect(nil == selector)
+    }
+
+    /// Tests the help functionality of the `run` command
+    @Test(.testHomeMockedToolchain()) func runHelp() async throws {
+        // Test --help is handled correctly
+        do {
+            try await TemperSwiftTests.runCommand(Run.self, ["run", "--help"])
+            #expect(Bool(false))
+        } catch {
+            #expect(error is CleanExit)
+        }
+
+        // Test -h is handled correctly
+        do {
+            try await TemperSwiftTests.runCommand(Run.self, ["run", "-h"])
+            #expect(Bool(false))
+        } catch {
+            #expect(error is CleanExit)
+        }
+    }
+
+    /// Tests the version functionality of the `run` command
+    @Test(.testHomeMockedToolchain()) func runVersion() async throws {
+        // Test --version is handled correctly
+        do {
+            try await TemperSwiftTests.runCommand(Run.self, ["run", "--version"])
+            #expect(Bool(false))
+        } catch {
+            #expect(error is CleanExit)
+        }
+    }
+}

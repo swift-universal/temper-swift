@@ -6,26 +6,51 @@ let swiftSettings = [
     SwiftSetting.enableUpcomingFeature("MemberImportVisibility"),
 ]
 
+#if os(Windows)
+let releaseTargets: [Target] = []
+#else
+let releaseTargets: [Target] = [
+    .executableTarget(
+        name: "build-temper-swift-release",
+        dependencies: [
+            .target(name: "TemperSwiftCore"),
+            .target(name: "TemperSwiftLinuxPlatform", condition: .when(platforms: [.linux])),
+            .target(name: "TemperSwiftMacOSPlatform", condition: .when(platforms: [.macOS])),
+            .product(name: "ArgumentParser", package: "swift-argument-parser"),
+            .product(name: "_NIOFileSystem", package: "swift-nio"),
+        ],
+        path: "Tools/build-temper-swift-release",
+        exclude: ["musl-clang"],
+    ),
+]
+#endif
+
 let package = Package(
-    name: "swiftly",
+    name: "temper-swift",
     platforms: [
         .macOS(.v13),
     ],
     products: [
+        .library(name: "TemperSwift", targets: ["TemperSwift"]),
+        .library(name: "TemperSwiftCommands", targets: ["TemperSwiftCommands"]),
         .executable(
-            name: "swiftly",
-            targets: ["Swiftly"]
+            name: "temper-swift",
+            targets: ["TemperSwiftExecutable"]
         ),
         .executable(
-            name: "test-swiftly",
-            targets: ["TestSwiftly"]
+            name: "test-temper-swift",
+            targets: ["TestTemperSwift"]
         ),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
         .package(url: "https://github.com/swift-server/async-http-client", from: "1.24.0"),
         .package(url: "https://github.com/swift-server/swift-openapi-async-http-client", from: "1.1.0"),
+        .package(url: "https://github.com/apple/swift-openapi-urlsession", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.80.0"),
+        // 2.37 adds NOCRYPT on Windows, avoiding WinCrypt's X509_NAME collision
+        // with BoringSSL when building against current Windows SDKs.
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.37.2"),
         .package(url: "https://github.com/apple/swift-tools-support-core.git", from: "0.7.2"),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.3.0"),
         .package(url: "https://github.com/apple/swift-openapi-generator", from: "1.7.2"),
@@ -36,37 +61,66 @@ let package = Package(
         .package(url: "https://github.com/nicklockwood/SwiftFormat", exact: "0.49.18"),
     ],
     targets: [
-        .executableTarget(
-            name: "Swiftly",
+        .target(
+            name: "TemperSwift",
             dependencies: [
+                .target(name: "TemperSwiftCore"),
+                .target(name: "TemperSwiftLinuxPlatform", condition: .when(platforms: [.linux])),
+                .target(name: "TemperSwiftMacOSPlatform", condition: .when(platforms: [.macOS])),
+                .target(name: "TemperSwiftWindowsPlatform", condition: .when(platforms: [.windows])),
+                .product(name: "SystemPackage", package: "swift-system"),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "TemperSwiftCommands",
+            dependencies: [
+                .target(name: "TemperSwift"),
+                .target(name: "TemperSwiftCore"),
+                .target(name: "TemperSwiftWebsiteAPI"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .target(name: "SwiftlyCore"),
-                .target(name: "LinuxPlatform", condition: .when(platforms: [.linux])),
-                .target(name: "MacOSPlatform", condition: .when(platforms: [.macOS])),
+                .product(name: "Subprocess", package: "swift-subprocess"),
                 .product(name: "SwiftToolsSupport-auto", package: "swift-tools-support-core"),
                 .product(name: "SystemPackage", package: "swift-system"),
             ],
             swiftSettings: swiftSettings
         ),
         .executableTarget(
-            name: "TestSwiftly",
+            name: "TemperSwiftExecutable",
+            dependencies: ["TemperSwiftCommands"]
+        ),
+        .executableTarget(
+            name: "TestTemperSwift",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .target(name: "SwiftlyCore"),
-                .target(name: "LinuxPlatform", condition: .when(platforms: [.linux])),
-                .target(name: "MacOSPlatform", condition: .when(platforms: [.macOS])),
+                .target(name: "TemperSwiftCore"),
+                .target(name: "TemperSwiftLinuxPlatform", condition: .when(platforms: [.linux])),
+                .target(name: "TemperSwiftMacOSPlatform", condition: .when(platforms: [.macOS])),
+                .target(name: "TemperSwiftWindowsPlatform", condition: .when(platforms: [.windows])),
             ],
             swiftSettings: swiftSettings
         ),
         .target(
-            name: "SwiftlyCore",
+            name: "TemperSwiftCore",
             dependencies: [
-                "SwiftlyDownloadAPI",
-                "SwiftlyWebsiteAPI",
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
-                .product(name: "NIOFoundationCompat", package: "swift-nio"),
+                "TemperSwiftDownloadAPI",
+                "TemperSwiftWebsiteAPI",
+                .product(
+                    name: "AsyncHTTPClient",
+                    package: "async-http-client",
+                    condition: .when(platforms: [.macOS, .linux])
+                ),
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
-                .product(name: "OpenAPIAsyncHTTPClient", package: "swift-openapi-async-http-client"),
+                .product(
+                    name: "OpenAPIAsyncHTTPClient",
+                    package: "swift-openapi-async-http-client",
+                    condition: .when(platforms: [.macOS, .linux])
+                ),
+                .product(
+                    name: "OpenAPIURLSession",
+                    package: "swift-openapi-urlsession",
+                    condition: .when(platforms: [.windows])
+                ),
                 .product(name: "SystemPackage", package: "swift-system"),
                 .product(name: "Subprocess", package: "swift-subprocess"),
             ],
@@ -74,7 +128,7 @@ let package = Package(
             plugins: ["GenerateCommandModels"]
         ),
         .target(
-            name: "SwiftlyDownloadAPI",
+            name: "TemperSwiftDownloadAPI",
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
             ],
@@ -84,7 +138,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SwiftlyWebsiteAPI",
+            name: "TemperSwiftWebsiteAPI",
             dependencies: [
                 .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
             ],
@@ -94,7 +148,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SwiftlyDocs",
+            name: "TemperSwiftDocs",
             path: "Documentation"
         ),
         .plugin(
@@ -102,7 +156,7 @@ let package = Package(
             capability: .command(
                 intent: .custom(
                     verb: "generate-docs-reference",
-                    description: "Generate a documentation reference for swiftly."
+                    description: "Generate a documentation reference for TemperSwift."
                 ),
                 permissions: [
                     .writeToPackageDirectory(reason: "This command generates documentation."),
@@ -132,23 +186,11 @@ let package = Package(
             ],
             path: "Tools/generate-command-models"
         ),
-        .executableTarget(
-            name: "build-swiftly-release",
-            dependencies: [
-                .target(name: "SwiftlyCore"),
-                .target(name: "LinuxPlatform", condition: .when(platforms: [.linux])),
-                .target(name: "MacOSPlatform", condition: .when(platforms: [.macOS])),
-                .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "_NIOFileSystem", package: "swift-nio"),
-            ],
-            path: "Tools/build-swiftly-release",
-            exclude: ["musl-clang"],
-        ),
         .target(
-            name: "LinuxPlatform",
+            name: "TemperSwiftLinuxPlatform",
             dependencies: [
-                "SwiftlyCore",
-                "CLibArchive",
+                "TemperSwiftCore",
+                "CTemperSwiftLibArchive",
                 .product(name: "SystemPackage", package: "swift-system"),
             ],
             swiftSettings: swiftSettings,
@@ -157,24 +199,36 @@ let package = Package(
             ]
         ),
         .target(
-            name: "MacOSPlatform",
+            name: "TemperSwiftMacOSPlatform",
             dependencies: [
-                "SwiftlyCore",
+                "TemperSwiftCore",
+                .product(name: "SystemPackage", package: "swift-system"),
+            ],
+            swiftSettings: swiftSettings
+        ),
+        .target(
+            name: "TemperSwiftWindowsPlatform",
+            dependencies: [
+                "TemperSwiftCore",
                 .product(name: "SystemPackage", package: "swift-system"),
             ],
             swiftSettings: swiftSettings
         ),
         .systemLibrary(
-            name: "CLibArchive",
+            name: "CTemperSwiftLibArchive",
             pkgConfig: "libarchive",
             providers: [
                 .apt(["libarchive-dev"]),
             ]
         ),
         .testTarget(
-            name: "SwiftlyTests",
+            name: "TemperSwiftTests",
             dependencies: [
-                "Swiftly",
+                "TemperSwift",
+                "TemperSwiftCommands",
+                "TemperSwiftCore",
+                "TemperSwiftWebsiteAPI",
+                .target(name: "TemperSwiftMacOSPlatform", condition: .when(platforms: [.macOS])),
                 .product(name: "SystemPackage", package: "swift-system"),
             ],
             resources: [
@@ -182,5 +236,5 @@ let package = Package(
             ],
             swiftSettings: swiftSettings
         ),
-    ]
+    ] + releaseTargets
 )

@@ -1,10 +1,10 @@
-# Swiftly design document
+# TemperSwift design document
 
 This document contains the high level design of swiftly. Not all features have been implemented yet. Note that this document is subject to change as the implementation progresses.
 
 ## Index
 
-- [Swiftly's purpose](#swiftlys-purpose)
+- [TemperSwift's purpose](#swiftlys-purpose)
 - [Installation of swiftly](#installation-of-switly)
 - [Linux](#linux)
   - [Installation of a Swift toolchain](#installation-of-a-swift-toolchain)
@@ -20,9 +20,9 @@ This document contains the high level design of swiftly. Not all features have b
   - [Implementation sketch - macOS](#implementation-sketch---macos)
   - [`config.json` schema](#configjson-schema)
 
-## Swiftly's purpose
+## TemperSwift's purpose
 
-Swiftly helps you to easily install different Swift toolchains locally on your account. It also provides a single path where you can run the tools in the currently selected toolchain. Toolchain selection is [configurable](#toolchain-selection) using different mechanisms.
+TemperSwift helps you to easily install different Swift toolchains locally on your account. It also provides a single path where you can run the tools in the currently selected toolchain. Toolchain selection is [configurable](#toolchain-selection) using different mechanisms.
 
 Note that swiftly is *not* a virtual toolchain in itself since there are cases where it cannot behave as a self-contained Swift toolchain. For example, there can be external dependencies on specific files, such as headers or libraries. There are far too many files that change between toolchain versions to be managed by swiftly. Also, for long-lived processes, there is no way to gracefully restart them without help from the client.
 
@@ -35,9 +35,9 @@ The installation of swiftly is divided into two phases: delivery and initializat
 * System-level package (e.g. homebrew, pkg, apt-get, rpm) that downloads and places the swiftly binary in a system location outside of the user's home directory, often runnable from the user's path
 * Manual compilation of the swiftly binary from this git repository (e.g. from a development environment)
 
-We'll need an initialization phase, which detects information about the OS and distribution in the case of Linux. The initialization mode is also responsible for setting up the directory structure for the toolchains (if necessary), setting up the shell environment for the user, and determining any operating system level dependencies that are required, but missing. Swiftly has its own configuration stored in the form of a `config.json` file, which will be created as part of initialization. Initialization creates a `env.sh` script that sets the `PATH`, swiftly environment variables `SWIFTLY_HOME_DIR` and `SWIFTLY_BIN_DIR`. The user's profile is modified to source this file and set up the environment for using swiftly.  None of the delivery methods can perform all of these steps on their own. System package managers don't normally update all users' profile or update the user's home directory structure directly.
+We'll need an initialization phase, which detects information about the OS and distribution in the case of Linux. The initialization mode is also responsible for setting up the directory structure for the toolchains (if necessary), setting up the shell environment for the user, and determining any operating system level dependencies that are required, but missing. TemperSwift has its own configuration stored in the form of a `config.json` file, which will be created as part of initialization. Initialization creates a `env.sh` script that sets the `PATH`, swiftly environment variables `SWIFTLY_HOME_DIR` and `SWIFTLY_BIN_DIR`. The user's profile is modified to source this file and set up the environment for using swiftly.  None of the delivery methods can perform all of these steps on their own. System package managers don't normally update all users' profile or update the user's home directory structure directly.
 
-Swiftly can perform these tasks itself with the capabilities provided by the Swift language and libraries, such as rich argument parsing, and launching system processes provided that the binary is delivered to the user. The trigger for the initialization is done via an `init` subcommand with some initialization detection for the other subcommands to help guide users who have gone off track.
+TemperSwift can perform these tasks itself with the capabilities provided by the Swift language and libraries, such as rich argument parsing, and launching system processes provided that the binary is delivered to the user. The trigger for the initialization is done via an `init` subcommand with some initialization detection for the other subcommands to help guide users who have gone off track.
 
 ```
 swiftly init
@@ -287,7 +287,7 @@ This command checks to see if there are new versions of `swiftly` itself and upg
 
 ### Toolchain selection
 
-Swiftly will create a set of symbolic links in its SWIFTLY_BIN_DIR during installation that point to the swiftly binary itself for each of the common toolchain commands, such as swift, swiftc, clang, etc. This mechanism will allows swiftly to proxy those command invocations to a selected toolchain at the time of invocation. A toolchain can be selected in these ways in order of precedence:
+TemperSwift will create a set of symbolic links in its SWIFTLY_BIN_DIR during installation that point to the swiftly binary itself for each of the common toolchain commands, such as swift, swiftc, clang, etc. This mechanism will allows swiftly to proxy those command invocations to a selected toolchain at the time of invocation. A toolchain can be selected in these ways in order of precedence:
 
 * The presence of a .swift-version file in the current working directory, or ancestor directory, with the required toolchain version
 * The swiftly default (in-use) toolchain set in the swftly config.json by `swiftly install` or `swiftly use` commands
@@ -318,7 +318,7 @@ CC=clang swiftly run ./configure
 CC=clang swiftly run make
 ```
 
-Swiftly prefixes the PATH to the selected toolchain directory and runs the command so that the toolchain executables are available and have precedence.
+TemperSwift prefixes the PATH to the selected toolchain directory and runs the command so that the toolchain executables are available and have precedence.
 
 If you want to explicitly specify a toolchain for the command you can do that with a selector notation like this:
 
@@ -341,7 +341,7 @@ CC=clang swiftly run +latest make
 
 ## Detailed Design
 
-Swiftly itself will be a SwiftPM project consisting of several executable products, one per supported platform, and all of these will share the core module that handles argument parsing, printing help information, and dispatching commands. Each platform’s executable will be built to statically link the stdlib so that they can be run without having installed Swift first.
+TemperSwift itself will be a SwiftPM project consisting of several executable products, one per supported platform, and all of these will share the core module that handles argument parsing, printing help information, and dispatching commands. Each platform’s executable will be built to statically link the stdlib so that they can be run without having installed Swift first.
 
 Within the core module, the following protocol will be defined:
 
