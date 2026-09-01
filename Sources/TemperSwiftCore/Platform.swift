@@ -23,6 +23,14 @@ public struct PlatformDefinition: Codable, Equatable, Sendable {
         self.namePretty = namePretty
     }
 
+    /// The platform directory used by download.swift.org.
+    ///
+    /// Windows is identified as `win10` by the Swift website API, but its
+    /// toolchain artifacts live below the `windows10` directory.
+    public var downloadDirectoryName: String {
+        self == .windows10 ? self.nameFull : self.name
+    }
+
     public static let macOS = PlatformDefinition(name: "xcode", nameFull: "osx", namePretty: "macOS")
     public static let windows10 = PlatformDefinition(
         name: "win10", nameFull: "windows10", namePretty: "Windows"

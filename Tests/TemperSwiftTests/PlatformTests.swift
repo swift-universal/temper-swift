@@ -7,6 +7,12 @@ import SystemPackage
 import Testing
 
 @Suite struct PlatformTests {
+    @Test func downloadDirectoryNames() {
+        #expect(PlatformDefinition.windows10.name == "win10")
+        #expect(PlatformDefinition.windows10.downloadDirectoryName == "windows10")
+        #expect(PlatformDefinition.ubuntu2204.downloadDirectoryName == "ubuntu2204")
+    }
+
     func mockToolchainDownload(version: String) async throws -> (FilePath, ToolchainVersion, FilePath) {
         let mockDownloader = MockToolchainDownloader(executables: ["swift"])
         let version = try! ToolchainVersion(parsing: version)

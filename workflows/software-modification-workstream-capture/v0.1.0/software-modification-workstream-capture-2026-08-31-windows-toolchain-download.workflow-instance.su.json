@@ -1,0 +1,74 @@
+{
+  "schemaVersion": "0.8.0",
+  "WorkflowInstanceModel": "0.8.0",
+  "kind": "workflow-instance",
+  "slug": "software-modification-workstream-capture-2026-08-31-windows-toolchain-download",
+  "title": "Software modification - TemperSwift Windows toolchain download",
+  "updated": "2026-09-01T06:05:00Z",
+  "workflowRef": {
+    "LinkRefModel": "0.5.0",
+    "sv": "0.5.0",
+    "t": "Software modification workstream capture",
+    "tg": [
+      {
+        "k": "rp",
+        "rt": "mono",
+        "v": "private/universal/substrate/collectives/spaces-universal/private/universal/kura-spaces/workflows/software-modification-workstream-capture/v0.1.0/software-modification-workstream-capture.workflow.su.json"
+      }
+    ]
+  },
+  "beadTrackingRefs": [
+    {
+      "LinkRefModel": "0.5.0",
+      "sv": "0.5.0",
+      "t": "TemperSwift Windows toolchain download",
+      "tg": [
+        {
+          "k": "rp",
+          "rt": "repo",
+          "v": "beads/bug-temper-swift-windows-toolchain-download-2026-08-31.beads-issue.su.json"
+        }
+      ]
+    }
+  ],
+  "receiptRefs": [
+    {
+      "LinkRefModel": "0.5.0",
+      "sv": "0.5.0",
+      "t": "Windows artifact path regression test",
+      "tg": [
+        {
+          "k": "rp",
+          "rt": "repo",
+          "v": "Tests/TemperSwiftTests/PlatformTests.swift"
+        }
+      ]
+    }
+  ],
+  "stateResults": [
+    {
+      "schemaVersion": "0.1.0",
+      "WorkflowInstanceStateResultModel": "0.1.0",
+      "kind": "workflow-instance-state-result",
+      "stateId": "workspace-preflight",
+      "outcome": "completed",
+      "summary": "Savepoint dirty-plan proved the TemperSwift repository clean before implementation."
+    },
+    {
+      "schemaVersion": "0.1.0",
+      "WorkflowInstanceStateResultModel": "0.1.0",
+      "kind": "workflow-instance-state-result",
+      "stateId": "correct-artifact-directory",
+      "outcome": "completed",
+      "summary": "The download directory now resolves independently from the Swift website API identifier; a focused Swift Testing test passed on Windows and the official artifact returned HTTP 200 with a 1,855,771,928-byte content length."
+    },
+    {
+      "schemaVersion": "0.1.0",
+      "WorkflowInstanceStateResultModel": "0.1.0",
+      "kind": "workflow-instance-state-result",
+      "stateId": "install-toolchain",
+      "outcome": "blocked-on-windows-download-transport",
+      "summary": "The corrected production CLI reached the artifact transfer but crashed inside FoundationNetworking. The attempted AsyncHTTPClient fallback was rejected after its Unix C shim failed to compile on Windows; the exploratory edits were restored byte-identically through Savepoint. The remaining fix belongs in the Windows wrkstrm-networking file-download backend."
+    }
+  ]
+}

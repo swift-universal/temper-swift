@@ -1,0 +1,27 @@
+{
+  "BeadsIssue": "0.1.0",
+  "schemaVersion": "0.1.0",
+  "id": "bug-temper-swift-windows-toolchain-download-2026-08-31",
+  "title": "Make TemperSwift Windows toolchain downloads production-safe",
+  "createdAt": "2026-09-01T06:05:00Z",
+  "createdBy": "Codex with operator authorization",
+  "issueType": "bug",
+  "status": "open",
+  "priority": 0,
+  "labels": [
+    "temper-swift",
+    "windows",
+    "toolchains",
+    "production",
+    "wrkstrm-networking"
+  ],
+  "description": "TemperSwift used the Swift website API identifier `win10` as the download.swift.org directory, producing a false 404. The canonical artifact directory is `windows10`. After correcting that distinction, the 1.72 GiB main-snapshot installer resolves with HTTP 200, but the Windows OpenAPI URLSession streaming transport crashes in FoundationNetworking while beginning the transfer. AsyncHTTPClient is not a Windows fallback because its CAsyncHTTPClient shim requires Unix strptime APIs. Complete this production fix by adding a bounded file-download capability to the Windows wrkstrm-networking backend and consuming that capability from TemperSwift without loading the installer into memory.",
+  "acceptanceCriteria": [
+    "TemperSwift preserves `win10` for Swift website metadata lookup and uses `windows10` for toolchain artifact directory URLs.",
+    "Swift Testing covers the Windows identifier distinction and a non-Windows control platform.",
+    "The Windows download path streams a multi-gigabyte artifact directly to a destination file through the canonical wrkstrm-networking Windows backend, with bounded memory and progress reporting.",
+    "HTTP status, redirect, cancellation, partial-file cleanup, and disk-write failures become typed errors instead of crashes.",
+    "Temper installs, verifies, and selects a current main-snapshot toolchain on Windows through the production CLI.",
+    "The implementation does not patch SwiftPM checkouts and does not enable AsyncHTTPClient on Windows while its Unix C shim remains incompatible."
+  ]
+}

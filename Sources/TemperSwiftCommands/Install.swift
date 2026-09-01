@@ -280,7 +280,7 @@ struct Install: TemperSwiftCommand {
         let tmpFile = fs.mktemp(ext: ".\(TemperSwift.currentPlatform.toolchainFileExtension)")
         try await fs.create(file: tmpFile, contents: nil)
         return try await fs.withTemporary(files: tmpFile) {
-            var platformString = config.platform.name
+            var platformString = config.platform.downloadDirectoryName
             var platformFullString = config.platform.nameFull
 
 #if !os(macOS) && arch(arm64)
