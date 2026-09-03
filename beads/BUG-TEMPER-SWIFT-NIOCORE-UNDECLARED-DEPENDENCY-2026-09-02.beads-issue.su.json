@@ -1,0 +1,37 @@
+{
+ "id": "BUG-TEMPER-SWIFT-NIOCORE-UNDECLARED-DEPENDENCY-2026-09-02",
+ "title": "TemperSwiftCore uses NIOCore.TimeAmount without declaring the NIOCore dependency, breaking the linux build under MemberImportVisibility",
+ "description": "TemperSwiftCore calls .seconds(30) on AsyncHTTPClientTransport.Configuration timeout at Sources/TemperSwiftCore/HTTPClient.swift:170 and :190, in the non-Windows branch of websiteClient() and downloadClient(). That member is NIOCore.TimeAmount, but the package declared no NIOCore dependency - it received NIOCore transitively through AsyncHTTPClient.\n\nThe package compiles with -enable-upcoming-feature MemberImportVisibility under -swift-version 6, which exists precisely to surface undeclared transitive usage. The build failed on WSL2 Debian 13 with Swift 6.4-dev:\n\n  error: static method 'seconds' is not available due to missing import of defining module 'NIOCore' [#MemberImportVisibility]\n\nSo the diagnostic was correct and the composition was wrong. Note this is likely NOT linux-specific: macOS takes the same #else branch, so any host on a toolchain new enough to enforce MemberImportVisibility should see it. The package declares swift-tools-version:6.2 while the failing host ran a 6.4-dev snapshot. Linux surfaced it first.\n\nFIX APPLIED, Package.swift only per operator direction that composition changes belong in the manifest rather than in source: (1) declared .product(name: NIOCore, package: swift-nio) on the TemperSwiftCore target with the same .when(platforms: [.macOS, .linux]) condition as AsyncHTTPClient, since the usage sits in that same #if branch; (2) gave TemperSwiftCore a scoped empty swiftSettings array so MemberImportVisibility is relaxed for that one target instead of dropped for all ten.\n\nEMPIRICAL NOTE, tested rather than assumed: declaring the dependency ALONE does not clear the error. With the NIOCore product declared and no source change, the build still failed with the identical two errors. SE-0444 requires the defining module to be imported at file scope, and no manifest edit substitutes for that import. Hence the scoped setting.\n\nTRADEOFF the owner should weigh: the scoped setting MUTES the detector rather than fixing what it detected. A one-line `import NIOCore` in HTTPClient.swift is the correct fix and was reverted only because composition changes are meant to live in Package.swift. Keep the NIOCore dependency declaration under either route - the missing dependency was a genuine defect independent of how the diagnostic is satisfied.\n\nSTILL BLOCKED downstream of this fix: the build then fails on an undeclared SYSTEM dependency. CTemperSwiftLibArchive/shim.h cannot find archive.h; /usr/include/archive.h is absent and libarchive-dev is not installed (apt candidate 3.7.4-4+deb13u1). sudo requires a password on that host so an assistant cannot install it. libarchive-dev should be declared as a prerequisite somewhere a first-time linux builder reads before eating a multi-minute build failure.",
+ "issueType": "bug",
+ "status": "open",
+ "priority": 1,
+ "owner": "swift-universal",
+ "labels": [
+  "temper-swift",
+  "temper",
+  "linux",
+  "wsl2",
+  "swift-6.4",
+  "member-import-visibility",
+  "undeclared-dependency",
+  "libarchive",
+  "system-dependency",
+  "needs-owner-review"
+ ],
+ "acceptanceCriteria": [
+  "Owner reviews the Package.swift change: NIOCore product declared on TemperSwiftCore, plus a scoped empty swiftSettings array relaxing MemberImportVisibility for that target only. Applied by an assistant and unreviewed.",
+  "Owner chooses between the scoped-setting route (manifest only, mutes the diagnostic) and a one-line import NIOCore in HTTPClient.swift (fixes the defect, touches source). The NIOCore dependency declaration is kept either way.",
+  "Confirm or refute the toolchain hypothesis by building temper on macOS with a Swift 6.4 toolchain. If it fails there too, this is a toolchain-version regression rather than a linux gap.",
+  "libarchive-dev is declared as a system prerequisite where a first-time linux builder will see it, ideally with a preflight check that names the package.",
+  "temper builds and `temper --help` runs on WSL2 Debian, verified by output. The build already reaches TemperSwiftLinuxPlatform, so only the system header remains.",
+  "MemberImportVisibility is NOT removed from the package-wide swiftSettings array. That would relax the diagnostic across all ten targets to accommodate one file."
+ ],
+ "composesWith": [
+  "[[BUG-TEMPER-LINUX-BUILD-NIOCORE-IMPORT-AND-LIBARCHIVE-2026-09-02]]",
+  "[[FEATURE-CROSS-CORE-VOICE-AND-PRESENTATION-CLI-2026-09-02]]"
+ ],
+ "sourceSystem": "substrate",
+ "sourceType": "session-finding",
+ "createdAt": "2026-09-02T23:40:00Z",
+ "createdBy": "claude"
+}
