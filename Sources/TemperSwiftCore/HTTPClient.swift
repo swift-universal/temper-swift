@@ -6,6 +6,21 @@ import OpenAPIRuntime
 import OpenAPIURLSession
 #else
 import AsyncHTTPClient
+// NIOCore defines TimeAmount, and therefore the `.seconds(30)` passed as the
+// AsyncHTTPClientTransport timeout in websiteClient() and downloadClient()
+// below. This package compiles with -enable-upcoming-feature
+// MemberImportVisibility under -swift-version 6, which requires importing the
+// module that *defines* a member rather than relying on a transitive re-export
+// through AsyncHTTPClient. Without this line both call sites fail with
+// "static method 'seconds' is not available due to missing import of defining
+// module 'NIOCore'".
+//
+// Not a Linux-specific fix, despite Linux being where it was found: macOS takes
+// this same #else branch, so any host on a toolchain new enough to enforce
+// MemberImportVisibility hits it. temper-swift declares swift-tools-version 6.2
+// and the enforcement arrived in a later toolchain than anyone had built this
+// with.
+import NIOCore
 import OpenAPIAsyncHTTPClient
 #endif
 import TemperSwiftDownloadAPI

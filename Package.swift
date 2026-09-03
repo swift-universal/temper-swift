@@ -18,10 +18,13 @@ let swiftSettings = [
 // for this one target instead of dropping it for all ten. Composition intent is
 // still recorded by the NIOCore dependency.
 //
-// TRADEOFF, for the owner to decide: this HIDES a real defect rather than fixing
-// it. The one-line `import NIOCore` in HTTPClient.swift is the correct fix and
-// costs one source line. Prefer that if touching source is acceptable here.
-let temperSwiftCoreSwiftSettings: [SwiftSetting] = []
+// RESOLVED: the source fix was taken. HTTPClient.swift now imports NIOCore in
+// its non-Windows branch, so TemperSwiftCore no longer needs the diagnostic
+// relaxed and carries the same settings as the other nine targets. The scoped
+// empty array is gone rather than left in place as a no-op, because a setting
+// that exists only to disable something is a claim about the code that is no
+// longer true.
+let temperSwiftCoreSwiftSettings: [SwiftSetting] = swiftSettings
 
 #if os(Windows)
 let releaseTargets: [Target] = []
